@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+Edgard Colllante
+Licenciado bajo el esquema Academic Free License version 2.1 
+
+http://hojadevidamia.azurewebsites.net
+Wiki command line client
+Autor: Edgard Collante - Jul-2017
+-->
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="Hub" default="build" basedir="./">
+
+	<!--
+	*******************************************************
+		Generales
+	*******************************************************
+	-->
+
+	<!-- Classpath para compilación -->
+		<path id="classpath">
+			<fileset dir="./lib">
+				<include name="*.jar" />
+    <exclude name="*sources.jar"/>
+    <exclude name="*javadoc.jar"/>
+			</fileset>
+		</path>
+	
+
+	<!-- Inicialización de las Propiedades -->
+	<target name="init" description="Inicializa las propiedades">
+		<!-- Definición de Propiedades -->
+		<property name="source" value="./src" />
+		<property name="classes" value="./classes" />
+		<property name="data" value="./data" />
+		<property name="jar" value="hub.jar" />
+		<property name="dist" value="./dist" />
+		<property name="lib" value="./lib" />
+		<property name="javadoc" value="./docs/api" />
+		<property name="doc" value="javadoc" />
+		<!-- Borra y crea los directorios nuevamente -->
+		<delete dir="${classes}" />
+		<mkdir dir="${classes}" />
+		<delete dir="${dist}" />
+		<mkdir dir="${dist}" />
+		<!--delete dir="${javadoc}" /-->
+		<!--mkdir dir="${javadoc}" /-->
+	</target>
+
+<!-- install ivy -->
+<target name="ivy" description="Install ivy">
+    <mkdir dir="${user.home}/.ant/lib" />
+    <get dest="${user.home}/.ant/lib/ivy.jar" src="http://search.maven.org/remotecontent?filepath=org/apache/ivy/ivy/2.4.0-rc1/ivy-2.4.0-rc1.jar" />
+</target>
+
+
+<!--
+	*******************************************************
+		Ejercicio
+	*******************************************************
+-->
+
+<!-- ivy to get dependencies and copy to project lib folder automatically -->
+<target name="resolve" description="retrieve dependencies with ivy" depends="init">
+    <ivy:retrieve />
+</target>
+
+	<!-- Compilación -->
+	<target name="compile" description="Compilación" depends="resolve">
+		<!-- Compila -->
+		<javac includeantruntime="false" destdir="${classes}" classpathref="classpath" debug="on" deprecation="on" optimize="on" srcdir="${source}"/>
+	</target>
+
+<!-- constructs the external libraries classpath name -->
+	<pathconvert property="classpath.name" pathsep=" ">
+		<path refid="classpath" />
+		<mapper>
+			<chainedmapper>
+				<flattenmapper />
+				<globmapper from="*.jar" to="lib/*.jar" />
+			</chainedmapper>
+		</mapper>
+	</pathconvert>
+
+
+	<!-- Creación de JAR -->
+	<target name="build" depends="compile" description="Crea el JAR de la aplicación">
+		<!-- Empaqueta las clases en un JAR -->
+		<jar jarfile="${dist}/${jar}" basedir="${classes}">
+			<!--Variables del manifest-->
+			<manifest>
+        <attribute name="Class-Path" value="${classpath.name}"/>
+		      <attribute name="Main-Class" value="anarquianegra.hub.Hub" />
+			</manifest>
+		</jar>
+		<!-- Copia las librerias en dist -->
+		<copy todir="${dist}/${lib}" >
+        <fileset dir="${lib}" includes="*.jar" excludes="*sources.jar, *javadoc.jar" />
+  </copy>
+	</target>
+	
+
+	<!-- Generación del javadoc -->
+	<target name="javaDoc" depends="init" description="Genera el java doc de la aplicación" >
+		<javadoc destdir="${javadoc}" executable ="${doc}">
+			<fileset dir="${source}" />
+		</javadoc>
+	</target>
+
+</project>
